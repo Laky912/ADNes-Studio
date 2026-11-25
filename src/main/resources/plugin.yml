@@ -1,0 +1,12 @@
+name: ADNesStudio
+main: studio.adnes.AdnesStudio
+version: 1.0.0
+author: Laky
+commands:
+  adnes:
+    description: Main ADNes Studio command
+    usage: /adnes <reload|items|give|boss|spawn>
+    aliases: [adnesstudio]
+permissions:
+  adnes.admin:
+    default: op
