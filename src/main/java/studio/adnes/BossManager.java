@@ -1,50 +1,14 @@
 package studio.adnes;
-
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.boss.BossBar;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
+import java.util.*;import org.bukkit.*;import org.bukkit.boss.*;import org.bukkit.entity.*;import org.bukkit.event.*;import org.bukkit.event.entity.*;import org.bukkit.plugin.java.JavaPlugin;import org.bukkit.scheduler.BukkitTask;import org.bukkit.util.Vector;
 public class BossManager implements Listener {
-    private final JavaPlugin plugin;
-    private final Map<UUID, Integer> phases = new HashMap<UUID, Integer>();
-    private final Map<UUID, BossBar> bars = new HashMap<UUID, BossBar>();
-    public BossManager(JavaPlugin plugin) { this.plugin=plugin; Bukkit.getPluginManager().registerEvents(this, plugin); }
-    public void spawn(Player player) { spawnPhase(player.getLocation(), 1); }
-    private void spawnPhase(Location at, int phase) {
-        LivingEntity boss=(LivingEntity)at.getWorld().spawnEntity(at, EntityType.VINDICATOR);
-        double hp=phase==1?300.0:phase==2?400.0:500.0;
-        boss.setMaxHealth(hp); boss.setHealth(hp); boss.setCustomName(ChatColor.DARK_PURPLE+"Shadow Sorcerer"+(phase==3?" Core":""));
-        boss.setCustomNameVisible(true); boss.setRemoveWhenFarAway(false);
-        phases.put(boss.getUniqueId(), phase);
-        BossBar bar=Bukkit.createBossBar(boss.getCustomName(), BarColor.PURPLE, BarStyle.SOLID);
-        for(Player p:at.getWorld().getPlayers()) if(p.getLocation().distanceSquared(at)<6400) bar.addPlayer(p);
-        bars.put(boss.getUniqueId(),bar);
-        plugin.getServer().getScheduler().runTaskTimer(plugin, new Runnable(){ public void run(){
-            if(!boss.isValid() || boss.isDead()) { BossBar b=bars.remove(boss.getUniqueId()); if(b!=null)b.removeAll(); return; }
-            BossBar b=bars.get(boss.getUniqueId()); if(b!=null)b.setProgress(Math.max(0.0,Math.min(1.0,boss.getHealth()/boss.getMaxHealth())));
-        }},1L,5L);
-    }
-    @EventHandler public void onDeath(EntityDeathEvent event) {
-        Integer phase=phases.remove(event.getEntity().getUniqueId()); if(phase==null)return;
-        BossBar bar=bars.remove(event.getEntity().getUniqueId()); if(bar!=null)bar.removeAll();
-        if(phase<3) {
-            final Location loc=event.getEntity().getLocation();
-            plugin.getServer().getScheduler().runTaskLater(plugin,new Runnable(){public void run(){spawnPhase(loc,phase+1);}},40L);
-        }
-    }
-    public void cleanup() { for(BossBar b:bars.values())b.removeAll(); bars.clear(); phases.clear(); }
+ private final JavaPlugin plugin;private final Map<UUID,Integer> phases=new HashMap<UUID,Integer>();private final Map<UUID,BossBar> bars=new HashMap<UUID,BossBar>();private final Map<UUID,BukkitTask> tasks=new HashMap<UUID,BukkitTask>();
+ public BossManager(JavaPlugin p){plugin=p;Bukkit.getPluginManager().registerEvents(this,p);}public void spawn(Player p){spawnPhase(p.getLocation().add(p.getLocation().getDirection().multiply(4)),1);}
+ private void spawnPhase(final Location at,final int phase){final LivingEntity b=(LivingEntity)at.getWorld().spawnEntity(at,EntityType.VINDICATOR);double hp=phase==1?300:phase==2?400:500;b.setMaxHealth(hp);b.setHealth(hp);b.setCustomName(ChatColor.DARK_PURPLE+(phase==3?"Shadow Sorcerer Core":"Shadow Sorcerer")+" §7["+phase+"/3]");b.setCustomNameVisible(true);b.setRemoveWhenFarAway(false);phases.put(b.getUniqueId(),phase);final BossBar bar=Bukkit.createBossBar(b.getCustomName(),BarColor.PURPLE,BarStyle.SOLID);bars.put(b.getUniqueId(),bar);final int[] tick={0};BukkitTask task=Bukkit.getScheduler().runTaskTimer(plugin,()->{if(!b.isValid()||b.isDead()){clean(b.getUniqueId());return;}for(Player p:b.getWorld().getPlayers()){boolean near=p.getLocation().distanceSquared(b.getLocation())<6400;if(near&&!bar.getPlayers().contains(p))bar.addPlayer(p);if(!near&&bar.getPlayers().contains(p))bar.removePlayer(p);}bar.setProgress(Math.max(0,Math.min(1,b.getHealth()/b.getMaxHealth())));tick[0]++;if(tick[0]%100==0)volley(b,phase);if(phase>=2&&tick[0]%160==0)dash(b);if(phase==3&&tick[0]%220==0)nova(b);},1L,1L);tasks.put(b.getUniqueId(),task);}
+ private void volley(LivingEntity b,int phase){for(Entity e:b.getNearbyEntities(18,10,18))if(e instanceof Player){Snowball s=b.getWorld().spawn(b.getEyeLocation(),Snowball.class);s.setShooter(b);s.setVelocity(((Player)e).getEyeLocation().toVector().subtract(b.getEyeLocation().toVector()).normalize().multiply(.7+phase*.1));b.getWorld().playSound(b.getLocation(),Sound.ENTITY_WITHER_SHOOT,1,.7f);break;}}
+ private void dash(LivingEntity b){Player t=null;double best=99999;for(Entity e:b.getNearbyEntities(16,8,16))if(e instanceof Player&&e.getLocation().distanceSquared(b.getLocation())<best){best=e.getLocation().distanceSquared(b.getLocation());t=(Player)e;}if(t!=null){Vector v=t.getLocation().toVector().subtract(b.getLocation().toVector()).normalize().multiply(1);v.setY(.25);b.setVelocity(v);b.getWorld().playSound(b.getLocation(),Sound.ENTITY_ENDERMEN_TELEPORT,1,.6f);}}
+ private void nova(LivingEntity b){Location l=b.getLocation();l.getWorld().strikeLightningEffect(l);l.getWorld().playSound(l,Sound.ENTITY_GENERIC_EXPLODE,1.2f,.6f);for(Entity e:b.getNearbyEntities(6,4,6))if(e instanceof Player){Player p=(Player)e;p.damage(8,b);Vector v=p.getLocation().toVector().subtract(l.toVector()).normalize().multiply(1.4);v.setY(.7);p.setVelocity(v);}}
+ @EventHandler public void damage(EntityDamageEvent e){if(phases.containsKey(e.getEntity().getUniqueId()))Bukkit.getScheduler().runTask(plugin,()->e.getEntity().setVelocity(new Vector(0,0,0)));}
+ @EventHandler public void death(EntityDeathEvent e){Integer phase=phases.get(e.getEntity().getUniqueId());if(phase==null)return;Location l=e.getEntity().getLocation();clean(e.getEntity().getUniqueId());e.getDrops().clear();e.setDroppedExp(0);if(phase<3)Bukkit.getScheduler().runTaskLater(plugin,()->spawnPhase(l,phase+1),60L);else{e.getDrops().add(CustomItems.create((AdnesStudio)plugin,"nexus_sword"));e.getDrops().add(CustomItems.create((AdnesStudio)plugin,"lunar_greatsword"));}}
+ public int removeNearby(Location center){int n=0;for(UUID id:new HashSet<UUID>(phases.keySet())){Entity e=Bukkit.getEntity(id);if(e!=null&&(center==null||(e.getWorld().equals(center.getWorld())&&e.getLocation().distanceSquared(center)<=10000))){e.remove();clean(id);n++;}}return n;}
+ private void clean(UUID id){BossBar b=bars.remove(id);if(b!=null)b.removeAll();BukkitTask t=tasks.remove(id);if(t!=null)t.cancel();phases.remove(id);}public void cleanup(){for(BukkitTask t:tasks.values())t.cancel();tasks.clear();for(BossBar b:bars.values())b.removeAll();bars.clear();phases.clear();}
 }
