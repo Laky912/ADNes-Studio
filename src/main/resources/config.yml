@@ -1,4 +1,4 @@
-# ADNes Studio - Paper 1.12.2
+# ADNes Studio - Paper 1.12.2 / Java 8
 settings:
   boss:
     name: "Shadow Sorcerer"
@@ -6,3 +6,7 @@ settings:
       1: 300
       2: 400
       3: 500
+    knockback-resistance: true
+  abilities:
+    cooldown-seconds: 8
+    enable-weapon-abilities: true
