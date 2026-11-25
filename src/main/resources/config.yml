@@ -1,0 +1,8 @@
+# ADNes Studio - Paper 1.12.2
+settings:
+  boss:
+    name: "Shadow Sorcerer"
+    phases:
+      1: 300
+      2: 400
+      3: 500
