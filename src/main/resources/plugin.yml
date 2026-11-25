@@ -1,11 +1,11 @@
 name: ADNesStudio
 main: studio.adnes.AdnesStudio
-version: 1.0.0
+version: 1.1.0
 author: Laky
 commands:
   adnes:
-    description: Main ADNes Studio command
-    usage: /adnes <reload|items|give|boss|spawn>
+    description: ADNes Studio custom items, abilities and bosses
+    usage: /adnes <items|give|boss|spawn|removeboss|reload>
     aliases: [adnesstudio]
 permissions:
   adnes.admin:
