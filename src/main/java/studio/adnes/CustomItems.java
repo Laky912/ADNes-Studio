@@ -1,28 +1,82 @@
 package studio.adnes;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 public final class CustomItems {
+    private static final Map<String, ItemDef> ITEMS = new LinkedHashMap<String, ItemDef>();
+    static {
+        add("nexus_helmet", Material.LEATHER_HELMET, 101, "Nexus Helmet");
+        add("nexus_chestplate", Material.LEATHER_CHESTPLATE, 102, "Nexus Chestplate");
+        add("nexus_leggings", Material.LEATHER_LEGGINGS, 103, "Nexus Leggings");
+        add("nexus_boots", Material.LEATHER_BOOTS, 104, "Nexus Boots");
+        add("nexus_axe", Material.DIAMOND_AXE, 105, "Nexus Axe");
+        add("nexus_bow", Material.BOW, 106, "Nexus Bow");
+        add("nexus_chest", Material.CHEST, 107, "Nexus Chest");
+        add("nexus_crossbow", Material.BOW, 108, "Nexus Crossbow");
+        add("nexus_fishing_rod", Material.FISHING_ROD, 109, "Nexus Fishing Rod");
+        add("nexus_hammer", Material.DIAMOND_AXE, 110, "Nexus Hammer");
+        add("nexus_hoe", Material.DIAMOND_HOE, 111, "Nexus Hoe");
+        add("nexus_key", Material.TRIPWIRE_HOOK, 112, "Nexus Key");
+        add("nexus_pickaxe", Material.DIAMOND_PICKAXE, 113, "Nexus Pickaxe");
+        add("nexus_shield", Material.SHIELD, 114, "Nexus Shield");
+        add("nexus_shovel", Material.DIAMOND_SPADE, 115, "Nexus Shovel");
+        add("nexus_spear", Material.TRIDENT, 116, "Nexus Spear");
+        add("nexus_sword", Material.DIAMOND_SWORD, 117, "Nexus Sword");
+        add("nexus_scythe", Material.IRON_HOE, 118, "Nexus Scythe");
+        add("nexus_staff", Material.BLAZE_ROD, 119, "Nexus Staff");
+        add("nexus_greatsword", Material.DIAMOND_SWORD, 120, "Nexus Greatsword");
+        add("nexus_trident", Material.TRIDENT, 121, "Nexus Trident");
+        add("nexus_wings", Material.ELYTRA, 122, "Nexus Wings");
+
+        add("lunar_helmet", Material.LEATHER_HELMET, 151, "Lunar Helmet");
+        add("lunar_chestplate", Material.LEATHER_CHESTPLATE, 152, "Lunar Chestplate");
+        add("lunar_leggings", Material.LEATHER_LEGGINGS, 153, "Lunar Leggings");
+        add("lunar_boots", Material.LEATHER_BOOTS, 154, "Lunar Boots");
+        add("lunar_axe", Material.IRON_AXE, 155, "Lunar Axe");
+        add("lunar_bow", Material.BOW, 156, "Lunar Bow");
+        add("lunar_chest", Material.CHEST, 157, "Lunar Chest");
+        add("lunar_crossbow", Material.BOW, 158, "Lunar Crossbow");
+        add("lunar_fishing_rod", Material.FISHING_ROD, 159, "Lunar Fishing Rod");
+        add("lunar_greatsword", Material.IRON_SWORD, 160, "Lunar Greatsword");
+        add("lunar_hammer", Material.IRON_AXE, 161, "Lunar Hammer");
+        add("lunar_hoe", Material.IRON_HOE, 162, "Lunar Hoe");
+        add("lunar_key", Material.TRIPWIRE_HOOK, 163, "Lunar Key");
+        add("lunar_pickaxe", Material.IRON_PICKAXE, 164, "Lunar Pickaxe");
+        add("lunar_scythe", Material.IRON_HOE, 165, "Lunar Scythe");
+        add("lunar_shield", Material.SHIELD, 166, "Lunar Shield");
+        add("lunar_shovel", Material.IRON_SPADE, 167, "Lunar Shovel");
+        add("lunar_spear", Material.TRIDENT, 168, "Lunar Spear");
+        add("lunar_staff", Material.BLAZE_ROD, 169, "Lunar Staff");
+        add("lunar_sword", Material.IRON_SWORD, 170, "Lunar Sword");
+        add("lunar_tail", Material.LEASH, 171, "Lunar Tail");
+        add("lunar_trident", Material.TRIDENT, 172, "Lunar Trident");
+    }
     private CustomItems() {}
+    private static void add(String id, Material material, int damage, String name) {
+        ITEMS.put(id, new ItemDef(material, (short) damage, name));
+    }
     public static ItemStack create(AdnesStudio plugin, String id) {
-        String key = id.toLowerCase();
-        Material material; short durability = 0; String name;
-        switch (key) {
-            case "nexus_sword": material=Material.DIAMOND_SWORD; durability=1; name="Nexus Sword"; break;
-            case "lunar_sword": material=Material.IRON_SWORD; durability=2; name="Lunar Sword"; break;
-            case "nexus_helmet": material=Material.DIAMOND_HELMET; durability=3; name="Nexus Helmet"; break;
-            case "lunar_helmet": material=Material.IRON_HELMET; durability=4; name="Lunar Helmet"; break;
-            default: return null;
-        }
-        ItemStack item = new ItemStack(material, 1, durability);
+        if (id == null) return null;
+        ItemDef def = ITEMS.get(id.toLowerCase().replace('-', '_'));
+        if (def == null) return null;
+        ItemStack item = new ItemStack(def.material, 1);
+        item.setDurability(def.damage);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(ChatColor.LIGHT_PURPLE + name);
-        meta.setLore(Arrays.asList(ChatColor.GRAY + "ADNes Studio", ChatColor.DARK_GRAY + "ID: " + key));
+        meta.setDisplayName(ChatColor.LIGHT_PURPLE + def.name);
+        meta.setLore(Arrays.asList(ChatColor.GRAY + "ADNes Studio", ChatColor.DARK_GRAY + "ID: " + id.toLowerCase().replace('-', '_'), ChatColor.YELLOW + "Habilidad: clic derecho"));
         item.setItemMeta(meta);
         return item;
+    }
+    public static boolean isKnown(String id) { return id != null && ITEMS.containsKey(id.toLowerCase().replace('-', '_')); }
+    public static String listIds() { return String.join(", ", ITEMS.keySet()); }
+    private static final class ItemDef {
+        final Material material; final short damage; final String name;
+        ItemDef(Material material, short damage, String name) { this.material=material; this.damage=damage; this.name=name; }
     }
 }
